@@ -1,0 +1,325 @@
+package rough;
+import java.util.Scanner;
+
+// Utility class for Colors
+class Colors {
+    public static final String RESET = "\u001B[0m";
+    public static final String GREEN = "\u001B[32m";
+    public static final String RED = "\u001B[31m";
+    public static final String BLUE = "\u001B[34m";
+    public static final String YELLOW = "\u001B[33m";
+    public static final String PURPLE = "\u001B[35m";
+    public static final String CYAN = "\u001B[36m";
+    public static final String BOLD = "\u001B[1m";
+}
+
+class Customer {
+    String name, phone, address;
+    Customer(String name, String phone, String address) {
+        this.name = name;
+        this.phone = phone;
+        this.address = address;
+    }
+}
+
+class Product {
+    int id;
+    String name, brand, category;
+    double price;
+
+    Product(int id, String name, String brand, double price, String category) {
+        this.id = id;
+        this.name = name;
+        this.brand = brand;
+        this.price = price;
+        this.category = category;
+    }
+
+    void display() {
+        System.out.println(Colors.CYAN + id + ". " + Colors.RESET + Colors.BOLD + name + 
+                           Colors.RESET + " | " + Colors.PURPLE + brand + Colors.RESET + " | " + Colors.GREEN + "₹" + price + Colors.RESET);
+    }
+}
+
+class CartItem {
+    Product product;
+    int quantity;
+    CartItem(Product product, int quantity) {
+        this.product = product;
+        this.quantity = quantity;
+    }
+}
+
+class Cart {
+    CartItem[] items = new CartItem[100];
+    int count = 0;
+
+    void add(Product p, int qty) {
+        items[count++] = new CartItem(p, qty);
+        System.out.println(Colors.GREEN + "✔ Added to cart" + Colors.RESET);
+    }
+
+    void remove(int index) {
+        for (int i = index; i < count - 1; i++)
+            items[i] = items[i + 1];
+        count--;
+        System.out.println(Colors.RED + "✔ Item removed" + Colors.RESET);
+    }
+
+    void showCart() {
+        double total = 0;
+        System.out.println(Colors.YELLOW + Colors.BOLD + "\n------ YOUR CART ------" + Colors.RESET);
+        for (int i = 0; i < count; i++) {
+            double subTotal = items[i].product.price * items[i].quantity;
+            System.out.println((i + 1) + ") " + items[i].product.name + " x" + items[i].quantity + " - " + Colors.GREEN + "₹" + subTotal + Colors.RESET);
+            total += subTotal;
+        }
+        System.out.println(Colors.BOLD + "Total Items: " + count + Colors.RESET);
+        System.out.println(Colors.GREEN + "Grand Total: ₹" + total + Colors.RESET);
+    }
+}
+
+public class Comm {
+    static Scanner sc = new Scanner(System.in);
+    static Cart cart = new Cart();
+    static Product[][][] store = new Product[5][4][10];
+    static String[] categories = {"Electronics", "Furniture", "Clothing", "Footwear", "Grocery"};
+
+    public static void main(String[] args) {
+        loadProducts();
+        System.out.println(Colors.YELLOW + Colors.BOLD + "🛒 WELCOME TO JAVA MART 🛒" + Colors.RESET);
+        System.out.print("Enter Name: "); String name = sc.nextLine();
+        System.out.print("Enter Phone: "); String phone = sc.nextLine();
+        System.out.print("Enter Address: "); String address = sc.nextLine();
+
+        Customer customer = new Customer(name, phone, address);
+
+        while (true) {
+            System.out.println(Colors.BLUE + "\n1. Shop\n2. View Cart\n3. Exit" + Colors.RESET);
+            int choice = sc.nextInt();
+            if (choice == 1) shop();
+            else if (choice == 2) cartMenu(customer);
+            else break;
+        }
+    }
+
+    static void shop() {
+        String[][] sub = {
+                {"Mobiles", "Laptops", "Televisions", "Accessories"},
+                {"Sofa", "Table", "Chair", "Bed"},
+                {"Men Wear", "Women Wear", "Kids Wear", "Winter Wear"},
+                {"Sports Shoes", "Casual Shoes", "Sandals", "Formal Shoes"},
+                {"Fruits", "Vegetables", "Snacks", "Beverages"}
+        };
+
+        System.out.println("\nSelect Category:");
+        for (int i = 0; i < 5; i++) System.out.println((i + 1) + ". " + categories[i]);
+        int c = sc.nextInt() - 1;
+
+        System.out.println("\nSelect Sub-Category:");
+        for (int i = 0; i < 4; i++) System.out.println((i + 1) + ". " + sub[c][i]);
+        int s = sc.nextInt() - 1;
+
+        System.out.println("\nProducts:");
+        for (int i = 0; i < 10; i++) store[c][s][i].display();
+
+        System.out.print("\nEnter Product ID: "); int pid = sc.nextInt();
+        System.out.print("Enter Quantity: "); int qty = sc.nextInt();
+
+        Product selected = store[c][s][pid - 1];
+        System.out.println("1. Add to Cart\n2. Buy Now");
+        if (sc.nextInt() == 1) cart.add(selected, qty);
+        else { cart.add(selected, qty); payment(null); }
+    }
+
+    static void cartMenu(Customer c) {
+        cart.showCart();
+        System.out.println(Colors.BLUE + "\n1. Purchase\n2. Remove\n3. Back" + Colors.RESET);
+        int ch = sc.nextInt();
+        if (ch == 1) payment(c);
+        else if (ch == 2) {
+            System.out.print("Enter item number: ");
+            cart.remove(sc.nextInt() - 1);
+        }
+    }
+
+    static void payment(Customer c) {
+        System.out.print("Bank Name: "); sc.next();
+        System.out.print("Account Number: "); sc.next();
+        System.out.println(Colors.GREEN + "\nPayment Successful ✅" + Colors.RESET);
+
+        System.out.println(Colors.YELLOW + Colors.BOLD + "\n================ FINAL BILL ================" + Colors.RESET);
+        if (c != null) System.out.println("Customer: " + c.name);
+
+        double grandTotal = 0;
+        for (String catName : categories) {
+            boolean header = false;
+            for (int i = 0; i < cart.count; i++) {
+                if (cart.items[i].product.category.equals(catName)) {
+                    if (!header) {
+                        System.out.println(Colors.CYAN + "\n--- " + catName.toUpperCase() + " ---" + Colors.RESET);
+                        header = true;
+                    }
+                    double price = cart.items[i].product.price * cart.items[i].quantity;
+                    System.out.printf("%-20s x%-3d ₹%10.2f\n", cart.items[i].product.name, cart.items[i].quantity, price);
+                    grandTotal += price;
+                }
+            }
+        }
+        System.out.println(Colors.GREEN + Colors.BOLD + "\nTOTAL PAYABLE: ₹" + grandTotal + Colors.RESET);
+        System.out.println(Colors.YELLOW + "===============================================" + Colors.RESET);
+        System.exit(0);
+    }
+
+    static void loadProducts() {
+        String cat = "Electronics";
+        store[0][0] = new Product[]{
+            new Product(1,"iPhone 14","Apple",69999,cat), new Product(2,"Galaxy S23","Samsung",74999,cat),
+            new Product(3,"Pixel 7","Google",59999,cat), new Product(4,"OnePlus 11","OnePlus",61999,cat),
+            new Product(5,"Redmi Note 13","Xiaomi",17999,cat), new Product(6,"Vivo V29","Vivo",32999,cat),
+            new Product(7,"Oppo Reno 10","Oppo",34999,cat), new Product(8,"Realme GT Neo","Realme",29999,cat),
+            new Product(9,"Moto Edge 40","Motorola",27999,cat), new Product(10,"iQOO Neo 7","iQOO",26999,cat)
+        };
+        store[0][1] = new Product[]{
+            new Product(1,"MacBook Air M2","Apple",114999,cat), new Product(2,"Inspiron 15","Dell",58999,cat),
+            new Product(3,"HP Pavilion","HP",64999,cat), new Product(4,"IdeaPad Slim","Lenovo",61999,cat),
+            new Product(5,"ROG Strix G15","Asus",124999,cat), new Product(6,"Acer Aspire 7","Acer",55999,cat),
+            new Product(7,"MSI GF63","MSI",67999,cat), new Product(8,"Surface Laptop Go","Microsoft",79999,cat),
+            new Product(9,"Galaxy Book","Samsung",72999,cat), new Product(10,"VivoBook 15","Asus",49999,cat)
+        };
+        store[0][2] = new Product[]{
+            new Product(1,"Bravia 55 OLED","Sony",129999,cat), new Product(2,"Crystal UHD","Samsung",59999,cat),
+            new Product(3,"OLED C2","LG",139999,cat), new Product(4,"Android TV","OnePlus",49999,cat),
+            new Product(5,"Mi TV 5X","Xiaomi",41999,cat), new Product(6,"Smart LED","TCL",37999,cat),
+            new Product(7,"4K QLED","Hisense",45999,cat), new Product(8,"Smart TV","Panasonic",52999,cat),
+            new Product(9,"Ultra HD","Vu",34999,cat), new Product(10,"Smart TV","Realme",32999,cat)
+        };
+        store[0][3] = new Product[]{
+            new Product(1,"AirPods Pro","Apple",24999,cat), new Product(2,"Galaxy Buds","Samsung",15999,cat),
+            new Product(3,"Power Bank","Mi",1999,cat), new Product(4,"Wireless Mouse","Logitech",1499,cat),
+            new Product(5,"Keyboard","HP",1299,cat), new Product(6,"Smart Watch","Noise",3999,cat),
+            new Product(7,"Bluetooth Speaker","JBL",5999,cat), new Product(8,"Charging Cable","Anker",999,cat),
+            new Product(9,"Laptop Bag","Targus",2499,cat), new Product(10,"Webcam","Logitech",6999,cat)
+        };
+
+        cat = "Furniture";
+        store[1][0] = new Product[]{
+            new Product(1,"3 Seater Sofa","Urban Ladder",25999,cat), new Product(2,"Recliner Sofa","Durian",49999,cat),
+            new Product(3,"Wooden Sofa","Godrej",34999,cat), new Product(4,"L Shape Sofa","HomeTown",55999,cat),
+            new Product(5,"Sofa Cum Bed","Pepperfry",28999,cat), new Product(6,"Velvet Sofa","IKEA",31999,cat),
+            new Product(7,"Sectional Sofa","Nilkamal",37999,cat), new Product(8,"Modern Couch","Wakefit",29999,cat),
+            new Product(9,"Luxury Sofa","RoyalOak",62999,cat), new Product(10,"Compact Sofa","Flipkart",19999,cat)
+        };
+        store[1][1] = new Product[]{
+            new Product(1,"Dining Table","IKEA",19999,cat), new Product(2,"Study Table","Nilkamal",5999,cat),
+            new Product(3,"Office Desk","Godrej",12999,cat), new Product(4,"Coffee Table","Urban Ladder",7999,cat),
+            new Product(5,"Folding Table","Pepperfry",4999,cat), new Product(6,"Wooden Table","Durian",15999,cat),
+            new Product(7,"Glass Table","HomeTown",13999,cat), new Product(8,"Computer Table","Wakefit",8999,cat),
+            new Product(9,"Side Table","IKEA",2999,cat), new Product(10,"Writing Desk","RoyalOak",9999,cat)
+        };
+        store[1][2] = new Product[]{
+            new Product(1,"Office Chair","Green Soul",12999,cat), new Product(2,"Gaming Chair","INNOWIN",17999,cat),
+            new Product(3,"Plastic Chair","Nilkamal",999,cat), new Product(4,"Dining Chair","Godrej",3999,cat),
+            new Product(5,"Rocking Chair","IKEA",8999,cat), new Product(6,"Study Chair","Urban Ladder",5999,cat),
+            new Product(7,"Arm Chair","Durian",14999,cat), new Product(8,"Folding Chair","Cello",1999,cat),
+            new Product(9,"Visitor Chair","Godrej",2999,cat), new Product(10,"Wooden Chair","HomeTown",6999,cat)
+        };
+        store[1][3] = new Product[]{
+            new Product(1,"King Size Bed","Wakefit",24999,cat), new Product(2,"Queen Bed","Urban Ladder",29999,cat),
+            new Product(3,"Single Bed","IKEA",14999,cat), new Product(4,"Storage Bed","Pepperfry",35999,cat),
+            new Product(5,"Hydraulic Bed","Durian",45999,cat), new Product(6,"Metal Bed","Nilkamal",17999,cat),
+            new Product(7,"Wooden Bed","Godrej",39999,cat), new Product(8,"Bunk Bed","HomeTown",27999,cat),
+            new Product(9,"Kids Bed","IKEA",19999,cat), new Product(10,"Luxury Bed","RoyalOak",59999,cat)
+        };
+
+        cat = "Clothing";
+        store[2][0] = new Product[]{
+            new Product(1,"Slim Fit Shirt","Allen Solly",1999,cat), new Product(2,"Casual T-Shirt","Roadster",899,cat),
+            new Product(3,"Formal Trousers","Van Heusen",2499,cat), new Product(4,"Denim Jeans","Levi's",2999,cat),
+            new Product(5,"Kurta Set","Manyavar",3499,cat), new Product(6,"Hoodie","Puma",2799,cat),
+            new Product(7,"Blazer","Louis Philippe",5999,cat), new Product(8,"Track Pants","Adidas",1999,cat),
+            new Product(9,"Jacket","U.S. Polo",4299,cat), new Product(10,"Sweatshirt","H&M",2299,cat)
+        };
+        store[2][1] = new Product[]{
+            new Product(1,"Kurti","Biba",1999,cat), new Product(2,"Saree","Suta",4999,cat),
+            new Product(3,"Top","Zara",1799,cat), new Product(4,"Jeans","Levi's",2999,cat),
+            new Product(5,"Dress","H&M",3499,cat), new Product(6,"Leggings","Go Colors",999,cat),
+            new Product(7,"Jacket","Only",4299,cat), new Product(8,"Skirt","Forever 21",1999,cat),
+            new Product(9,"Ethnic Set","W",5999,cat), new Product(10,"Sweater","Marks & Spencer",3299,cat)
+        };
+        store[2][2] = new Product[]{
+            new Product(1,"Kids T-Shirt","FirstCry",599,cat), new Product(2,"Frock","Hopscotch",1299,cat),
+            new Product(3,"Jeans","Babyhug",999,cat), new Product(4,"Shorts","Puma",899,cat),
+            new Product(5,"Jacket","Mothercare",1999,cat), new Product(6,"Ethnic Wear","Biba Kids",2499,cat),
+            new Product(7,"Track Suit","Adidas",1799,cat), new Product(8,"Sweatshirt","H&M",1299,cat),
+            new Product(9,"Night Wear","FirstCry",799,cat), new Product(10,"School Uniform","Raymond",1999,cat)
+        };
+        store[2][3] = new Product[]{
+            new Product(1,"Woolen Jacket","Woodland",5999,cat), new Product(2,"Sweater","Monte Carlo",3499,cat),
+            new Product(3,"Thermal Wear","Jockey",1999,cat), new Product(4,"Hooded Jacket","Puma",6999,cat),
+            new Product(5,"Cardigan","H&M",2999,cat), new Product(6,"Winter Coat","Marks & Spencer",8999,cat),
+            new Product(7,"Scarf","Zara",1499,cat), new Product(8,"Gloves","Nike",1299,cat),
+            new Product(9,"Beanie","Adidas",999,cat), new Product(10,"Woolen Socks","Puma",799,cat)
+        };
+
+        cat = "Footwear";
+        store[3][0] = new Product[]{
+            new Product(1,"Air Zoom Pegasus","Nike",9999,cat), new Product(2,"Ultraboost","Adidas",15999,cat),
+            new Product(3,"RS-X","Puma",8999,cat), new Product(4,"Gel Nimbus","ASICS",12999,cat),
+            new Product(5,"Revolution 6","Nike",4999,cat), new Product(6,"Running Shoes","Campus",2499,cat),
+            new Product(7,"Training Shoes","Reebok",5799,cat), new Product(8,"Outdoor Shoes","Woodland",6999,cat),
+            new Product(9,"Trail Shoes","Columbia",8499,cat), new Product(10,"Power Shoes","Sparx",2999,cat)
+        };
+        store[3][1] = new Product[]{
+            new Product(1,"Casual Sneakers","Nike",4999,cat), new Product(2,"Slip-ons","Puma",3499,cat),
+            new Product(3,"Loafers","Bata",2999,cat), new Product(4,"Canvas Shoes","Red Tape",2799,cat),
+            new Product(5,"Walking Shoes","Skechers",5999,cat), new Product(6,"Everyday Shoes","Campus",1999,cat),
+            new Product(7,"Mesh Sneakers","Adidas",4499,cat), new Product(8,"Low Top Shoes","HRX",3299,cat),
+            new Product(9,"Street Shoes","Zara",5499,cat), new Product(10,"Comfort Shoes","Relaxo",2499,cat)
+        };
+        store[3][2] = new Product[]{
+            new Product(1,"Oxford Shoes","Clarks",6999,cat), new Product(2,"Derby Shoes","Hush Puppies",5999,cat),
+            new Product(3,"Leather Shoes","Bata",4999,cat), new Product(4,"Slip Formal","Red Tape",4499,cat),
+            new Product(5,"Office Shoes","Metro",3999,cat), new Product(6,"Classic Leather","Louis Philippe",7999,cat),
+            new Product(7,"Formal Loafers","Allen Solly",5499,cat), new Product(8,"Pointed Shoes","Zara",6999,cat),
+            new Product(9,"Brogue Shoes","Clarks",8999,cat), new Product(10,"Daily Formal","Relaxo",2999,cat)
+        };
+        store[3][3] = new Product[]{
+            new Product(1,"Floaters","Sparx",1999,cat), new Product(2,"Sports Sandals","Woodland",3499,cat),
+            new Product(3,"Leather Sandals","Bata",2499,cat), new Product(4,"Casual Sandals","Puma",2999,cat),
+            new Product(5,"Velcro Sandals","Nike",3999,cat), new Product(6,"Daily Sandals","Relaxo",1499,cat),
+            new Product(7,"Outdoor Sandals","Columbia",4499,cat), new Product(8,"Walking Sandals","Campus",1999,cat),
+            new Product(9,"Comfort Sandals","Crocs",4999,cat), new Product(10,"Beach Sandals","Havaianas",1299,cat)
+        };
+
+        cat = "Grocery";
+        store[4][0] = new Product[]{
+            new Product(1,"Apple","Kashmir",180,cat), new Product(2,"Banana","Robusta",60,cat),
+            new Product(3,"Orange","Nagpur",120,cat), new Product(4,"Mango","Alphonso",300,cat),
+            new Product(5,"Grapes","Green",140,cat), new Product(6,"Pomegranate","Solapur",220,cat),
+            new Product(7,"Pineapple","Kerala",90,cat), new Product(8,"Papaya","Local",60,cat),
+            new Product(9,"Watermelon","Local",50,cat), new Product(10,"Kiwi","Imported",250,cat)
+        };
+        store[4][1] = new Product[]{
+            new Product(1,"Potato","Fresh",40,cat), new Product(2,"Tomato","Fresh",50,cat),
+            new Product(3,"Onion","Fresh",45,cat), new Product(4,"Carrot","Fresh",60,cat),
+            new Product(5,"Beans","Fresh",70,cat), new Product(6,"Cabbage","Fresh",40,cat),
+            new Product(7,"Cauliflower","Fresh",55,cat), new Product(8,"Brinjal","Fresh",50,cat),
+            new Product(9,"Spinach","Fresh",30,cat), new Product(10,"Capsicum","Fresh",80,cat)
+        };
+        store[4][2] = new Product[]{
+            new Product(1,"Lays","PepsiCo",20,cat), new Product(2,"Kurkure","PepsiCo",25,cat),
+            new Product(3,"Good Day","Britannia",30,cat), new Product(4,"Hide & Seek","Parle",40,cat),
+            new Product(5,"Oreo","Cadbury",35,cat), new Product(6,"Bourbon","Britannia",45,cat),
+            new Product(7,"Marie Gold","Britannia",30,cat), new Product(8,"Little Hearts","Britannia",20,cat),
+            new Product(9,"Tedhe Medhe","ITC",20,cat), new Product(10,"Bingo","ITC",20,cat)
+        };
+        store[4][3] = new Product[]{
+            new Product(1,"Coca Cola","Coca Cola",40,cat), new Product(2,"Pepsi","PepsiCo",40,cat),
+            new Product(3,"Sprite","Coca Cola",40,cat), new Product(4,"Fanta","Coca Cola",40,cat),
+            new Product(5,"Thums Up","Coca Cola",45,cat), new Product(6,"Maaza","Coca Cola",50,cat),
+            new Product(7,"Slice","PepsiCo",45,cat), new Product(8,"Red Bull","Red Bull",125,cat),
+            new Product(9,"Minute Maid","Coca Cola",60,cat), new Product(10,"Real Juice","Dabur",70,cat)
+        };
+    }
+}
